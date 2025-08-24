@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:toko_buah/bloc/auth/auth_bloc.dart';
 import 'package:toko_buah/page/auth/login_page.dart';
 import 'package:toko_buah/page/auth/register_page.dart';
 import 'package:toko_buah/page/home/explore/explore_detail.dart';
@@ -11,7 +13,13 @@ Route<dynamic> generateRoute(RouteSettings settings) {
     case '/':
       return MaterialPageRoute(builder: (_) => SplashPage());
     case '/login':
-      return MaterialPageRoute(builder: (_) => LoginPage());
+      return MaterialPageRoute(
+        builder:
+            (_) => BlocProvider(
+              create: (context) => AuthLoginBloc(),
+              child: LoginPage(),
+            ),
+      );
     case '/register':
       return MaterialPageRoute(builder: (_) => RegisterPage());
     case '/home':

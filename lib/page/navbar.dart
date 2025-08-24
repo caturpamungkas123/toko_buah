@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:persistent_bottom_nav_bar/persistent_bottom_nav_bar.dart';
+import 'package:toko_buah/bloc/product/product_bloc.dart';
 import 'package:toko_buah/page/home/account/main_page_account.dart';
 import 'package:toko_buah/page/home/chart_main_page.dart';
 import 'package:toko_buah/page/home/explore_main_page.dart';
@@ -21,7 +23,7 @@ class _NavbarState extends State<Navbar> {
 
   List<Widget> _buildScreens() {
     return [
-      MainHomePage(),
+      BlocProvider(create: (context) => ProductBloc(), child: MainHomePage()),
       ExploreMainPage(),
       ChartMainPage(),
       MainPageFavorite(),

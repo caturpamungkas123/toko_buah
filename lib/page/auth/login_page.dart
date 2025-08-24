@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:toko_buah/bloc/auth/auth_bloc.dart';
 import 'package:toko_buah/page/navbar.dart';
 import 'package:toko_buah/utils/color_util.dart';
 
@@ -11,7 +13,13 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  TextEditingController email = TextEditingController();
+  void logIn(BuildContext context) {
+    context.read<AuthLoginBloc>().add(
+      OnAuthLogInEvent(username: username.text, password: pass.text),
+    );
+  }
+
+  TextEditingController username = TextEditingController();
   TextEditingController pass = TextEditingController();
 
   @override
@@ -46,13 +54,13 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                   SizedBox(height: 35),
                   TextInput(
-                    email: email,
-                    label: "Email",
-                    type: TextInputType.emailAddress,
+                    username: username,
+                    label: "Username",
+                    type: TextInputType.text,
                   ),
                   SizedBox(height: 20),
                   TextInput(
-                    email: pass,
+                    username: pass,
                     label: "Password",
                     type: TextInputType.visiblePassword,
                   ),
@@ -66,25 +74,55 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                     ),
                   ),
-                  GestureDetector(
-                    onTap:
-                        () => Navigator.push(
+                  BlocConsumer<AuthLoginBloc, AuthLoginState>(
+                    listener: (context, state) {
+                      if (state is AuthLoad) {
+                        Navigator.push(
                           context,
                           MaterialPageRoute(builder: (context) => Navbar()),
-                        ),
-                    child: Center(
-                      child: Container(
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(16),
-                          color: colorButton,
-                        ),
-                        height: 67,
-                        width: MediaQuery.of(context).size.width,
-                        child: Text("Log In"),
-                      ),
-                    ),
+                        );
+                      }
+                    },
+                    builder: (context, state) {
+                      return Column(
+                        children: [
+                          GestureDetector(
+                            onTap: () {
+                              if (state is! AuthLoading) {
+                                logIn(context);
+                              }
+                            },
+                            child: Center(
+                              child: Container(
+                                alignment: Alignment.center,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(16),
+                                  color: colorButton,
+                                ),
+                                height: 67,
+                                width: MediaQuery.of(context).size.width,
+                                child:
+                                    (state is AuthLoading)
+                                        ? Text("Loading")
+                                        : Text("Log In"),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Center(
+                            child:
+                                (state is AuthFail)
+                                    ? Text(
+                                      state.errors.error ?? "",
+                                      style: TextStyle(color: Colors.red),
+                                    )
+                                    : Text(""),
+                          ),
+                        ],
+                      );
+                    },
                   ),
+
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -115,12 +153,12 @@ class _LoginPageState extends State<LoginPage> {
 class TextInput extends StatefulWidget {
   const TextInput({
     super.key,
-    required this.email,
+    required this.username,
     required this.label,
     required this.type,
   });
 
-  final TextEditingController email;
+  final TextEditingController username;
   final String label;
   final TextInputType type;
 
@@ -137,7 +175,7 @@ class _TextInputState extends State<TextInput> {
   @override
   Widget build(BuildContext context) {
     return TextField(
-      controller: widget.email,
+      controller: widget.username,
       keyboardType: widget.type,
       // jika keyboar type password maka gunakan param _obscure
       // agar bisa sesuai ketika icon maka berubah, namun jika selain password pantek false, alias dilihat

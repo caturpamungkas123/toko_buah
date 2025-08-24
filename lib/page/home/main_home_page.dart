@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:toko_buah/bloc/product/product_bloc.dart';
+import 'package:toko_buah/model/product/category.product.dart';
 import 'package:toko_buah/page/utils/product_card_util.dart';
 import 'package:toko_buah/page/utils/slide_home_page.dart';
 import 'package:toko_buah/routes/navigator_service.dart';
@@ -17,6 +20,12 @@ class MainHomePage extends StatefulWidget {
 List categori = ["Exclusive Offer", "Best Selling", "Favorit"];
 
 class _MainHomePageState extends State<MainHomePage> {
+  @override
+  void initState() {
+    context.read<ProductBloc>().add(OnFetchCatgortProduct());
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -37,52 +46,80 @@ class _MainHomePageState extends State<MainHomePage> {
                 child: Search(),
               ),
               SlideHomePage(),
-              ListView.builder(
-                shrinkWrap: true, // biar tinggi menyesuaikan isi
-                physics: NeverScrollableScrollPhysics(),
-                itemCount: categori.length,
-                itemBuilder: (context, index) {
-                  return Column(
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 20),
-                        child: ListCategori(title: categori[index], link: ""),
-                      ),
-                      SizedBox(
-                        height: 200, // ← atur tinggi sesuai kebutuhan
-                        child: ListView.builder(
-                          scrollDirection: Axis.horizontal,
-                          itemCount: 5,
-                          itemBuilder: (context, index) {
-                            return Padding(
-                              padding: EdgeInsets.only(
-                                // jiak index adalah yang pertama maka kasih padding hanya rightnya
-                                left: index == 0 ? 0 : 10,
-                                // sesuaikan dengan ittemcount
-                                // jika index akhir sama dengan max maka kasih padding di lefft nya,
-                                right: index == 5 ? 10 : 0,
+              BlocBuilder<ProductBloc, ProductState>(
+                builder: (context, state) {
+                  if (state is ProductLoading) {
+                    return const CircularProgressIndicator();
+                  } else if (state is ProductFail) {
+                    return Text(state.message);
+                  } else if (state is ProductLoad) {
+                    // Pastikan 'data' tidak null. Jika null, berikan list kosong
+                    final List<Datum> data = state.categori.data ?? [];
+
+                    // Jika data kosong, tampilkan pesan "empty"
+                    if (data.isEmpty) {
+                      return const Center(child: Text("empty"));
+                    }
+
+                    return ListView.builder(
+                      shrinkWrap: true, // biar tinggi menyesuaikan isi
+                      physics: NeverScrollableScrollPhysics(),
+                      itemCount: data.length,
+                      itemBuilder: (context, index) {
+                        final Datum item = data[index];
+                        final List<Product> products = item.product ?? [];
+                        return Column(
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 20),
+                              child: ListCategori(
+                                title: item.name ?? "",
+                                link: "",
                               ),
-                              child: ProductCard(
-                                onTap:
-                                    () => rootNavigatorKey.currentState!
-                                        .pushNamed(
-                                          '/product-detail',
-                                          arguments: {
-                                            'imgPath': 'assets/img/pisang.png',
-                                          },
-                                        ),
-                                imgPath: "assets/img/pisang.png",
-                                subTitle: "7pcs, Priceg",
-                                title: "Organic Bananas",
-                                link: "detail",
-                                price: "\$4.99",
+                            ),
+                            SizedBox(
+                              height: 200, // ← atur tinggi sesuai kebutuhan
+                              child: ListView.builder(
+                                scrollDirection: Axis.horizontal,
+                                itemCount: products.length,
+                                itemBuilder: (context, index) {
+                                  final Product product = products[index];
+
+                                  return Padding(
+                                    padding: EdgeInsets.only(
+                                      // jiak index adalah yang pertama maka kasih padding hanya rightnya
+                                      left: index == 0 ? 0 : 10,
+                                      // sesuaikan dengan ittemcount
+                                      // jika index akhir sama dengan max maka kasih padding di lefft nya,
+                                      right: index == 5 ? 10 : 0,
+                                    ),
+                                    child: ProductCard(
+                                      onTap:
+                                          () => rootNavigatorKey.currentState!
+                                              .pushNamed(
+                                                '/product-detail',
+                                                arguments: {
+                                                  'imgPath':
+                                                      'assets/img/pisang.png',
+                                                },
+                                              ),
+                                      imgPath: "assets/img/pisang.png",
+                                      subTitle: product.heavy ?? "",
+                                      title: product.name ?? "",
+                                      link: "detail",
+                                      price: "Rp.${product.price ?? ""}",
+                                    ),
+                                  );
+                                },
                               ),
-                            );
-                          },
-                        ),
-                      ),
-                    ],
-                  );
+                            ),
+                          ],
+                        );
+                      },
+                    );
+                  } else {
+                    return const SizedBox.shrink();
+                  }
                 },
               ),
             ],
